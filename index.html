@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Toolkit</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23FF0000'/><polygon points='38,28 38,72 72,50' fill='white'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#FF0000;--red2:#cc0000;--bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+  --border:#2a2a2a;--border2:#333;--text:#f0f0f0;--muted:#888;--muted2:#555;
+  --green:#22c55e;--amber:#f59e0b;--blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button{font-family:'Geist',sans-serif;cursor:pointer}
+input,textarea,select{font-family:'Geist',sans-serif}
+
+/* HEADER */
+.hdr{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:200}
+.hdr-logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.yt-icon{width:30px;height:21px;background:var(--red);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.yt-icon::after{content:'';border-left:9px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
+.hdr-title{font-family:'Geist Mono',monospace;font-size:15px;font-weight:600;letter-spacing:-0.5px}
+.hdr-title span{color:var(--red)}
+.hdr-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.back-btn{display:none;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:8px;transition:all .2s}
+.back-btn:hover{color:var(--text);border-color:var(--border2)}
+.back-btn svg{width:14px;height:14px}
+.back-btn.visible{display:flex}
+
+/* DASHBOARD */
+#dashboard{padding:2.5rem 2rem}
+.dash-hero{text-align:center;margin-bottom:3rem}
+.dash-hero h1{font-size:clamp(28px,4vw,42px);font-weight:700;line-height:1.15;margin-bottom:.75rem}
+.dash-hero h1 span{color:var(--red)}
+.dash-hero p{color:var(--muted);font-size:15px}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:1200px;margin:0 auto}
+.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.5rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.tool-card::before{content:'';position:absolute;inset:0;background:var(--red);opacity:0;transition:opacity .2s;border-radius:14px}
+.tool-card:hover{border-color:var(--red);transform:translateY(-2px)}
+.tool-card:hover::before{opacity:.04}
+.tool-card>*{position:relative;z-index:1}
+.tc-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:1rem}
+.tc-tag{position:absolute;top:1rem;right:1rem;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.tc-tag.free{background:rgba(34,197,94,.15);color:var(--green)}
+.tc-tag.new{background:rgba(59,130,246,.15);color:var(--blue)}
+.tc-title{font-size:16px;font-weight:600;margin-bottom:.4rem}
+.tc-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.tc-arrow{position:absolute;bottom:1.25rem;right:1.25rem;width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;transition:all .2s}
+.tool-card:hover .tc-arrow{background:var(--red);border-color:var(--red);color:#fff}
+
+/* TOOL PANEL */
+#tool-panel{display:none;min-height:calc(100vh - 56px)}
+#tool-panel.visible{display:block}
+.tool-inner{max-width:1200px;margin:0 auto;padding:2rem}
+.tool-header{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.tool-header h2{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:.4rem}
+.tool-header p{color:var(--muted);font-size:14px}
+
+/* SHARED */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.label{font-size:11px;font-weight:700;color:var(--red);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.6rem;font-family:'Geist Mono',monospace}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:.4rem;font-weight:500}
+input[type=text],input[type=url],textarea,select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;transition:border-color .2s;resize:none}
+input[type=text]:focus,input[type=url]:focus,textarea:focus,select:focus{outline:none;border-color:var(--red)}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+.btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red2)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--muted)}.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.btn-green{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green)}.btn-green:hover{background:rgba(34,197,94,.25)}
+.two-col{display:grid;grid-template-columns:360px 1fr;gap:1.5rem}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--red);background:rgba(255,0,0,.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.upload-zone p{font-size:12px;color:var(--muted);margin-top:5px}
+.upload-zone strong{font-size:13px;color:var(--text)}
+.tab-row{display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
+.tab-btn{padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;border:none;color:var(--muted);transition:all .2s;font-family:'Geist',sans-serif}
+.tab-btn.act{background:var(--red);color:#fff}
+.tab-btn:hover:not(.act){color:var(--text)}
+.dev-row{display:flex;gap:6px;flex-wrap:wrap}
+.dev-btn{padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:20px;transition:all .2s;font-family:'Geist',sans-serif}
+.dev-btn.act{border-color:var(--text);color:var(--text)}
+.theme-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+.tog{width:30px;height:17px;background:var(--border2);border-radius:9px;position:relative;cursor:pointer;transition:background .2s}
+.tog.on{background:var(--red)}
+.tog-k{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .2s}
+.tog.on .tog-k{transform:translateX(13px)}
+.preview-bar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem}
+.copy-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{border-color:var(--border2);color:var(--text)}
+.copy-btn.copied{border-color:var(--green);color:var(--green)}
+.tag-pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;margin:3px}
+.tag-pill .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;transition:color .2s}
+.tag-pill .rm:hover{color:var(--red)}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:13px}
+.note-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#d97706;line-height:1.5;margin-top:1rem}
+.mt1{margin-top:.75rem}.mt2{margin-top:1.5rem}
+.mono{font-family:'Geist Mono',monospace}
+.swatch{width:56px;height:56px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.swatch:hover{transform:scale(1.1)}
+.swatch-hex{font-size:10px;text-align:center;margin-top:3px;font-family:'Geist Mono',monospace;color:var(--muted)}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);background:var(--bg3);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
+.chk.done{background:var(--green);border-color:var(--green)}
+.chk.done::after{content:'✓';font-size:11px;color:#fff;font-weight:700}
+.chk-text{font-size:13px;line-height:1.4}
+.chk-text.done{text-decoration:line-through;color:var(--muted)}
+.chk-hint{font-size:11px;color:var(--muted);margin-top:2px}
+.progress-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:.5rem}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .4s}
+.deeplink-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.deeplink-item:last-child{border-bottom:none}
+.dl-url{flex:1;font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;word-break:break-all;padding:6px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)}
+.thumb-size-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:1rem}
+.thumb-size-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.thumb-size-card img{width:100%;display:block}
+.thumb-size-info{padding:8px 10px;display:flex;justify-content:space-between;align-items:center}
+.dl-link{background:var(--bg4);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:5px;text-decoration:none;font-weight:600;cursor:pointer;transition:all .2s}
+.dl-link:hover{background:var(--red);border-color:var(--red);color:#fff}
+.pill{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);margin:3px}
+
+/* YT FEED */
+.yt-feed-wrap{background:#0f0f0f;border-radius:12px;overflow:hidden}
+.yt-feed-wrap.light{background:#f9f9f9}
+.home-grid{display:grid;gap:12px;padding:14px}
+.home-grid.desktop{grid-template-columns:repeat(4,1fr)}
+.home-grid.tablet{grid-template-columns:repeat(2,1fr)}
+.home-grid.mobile{grid-template-columns:1fr}
+.yt-card .yt-tw{position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#222}
+.yt-tw img,.rec-thumb img,.s-thumb img{width:100%;height:100%;object-fit:cover}
+.yt-dur{position:absolute;bottom:5px;right:6px;background:rgba(0,0,0,.85);color:#fff;font-size:11px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:'Geist Mono',monospace}
+.yt-prog{position:absolute;bottom:0;left:0;height:3px;background:var(--red)}
+.yt-meta{display:flex;gap:8px;padding:7px 2px 2px}
+.yt-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;overflow:hidden;background:#333;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#aaa}
+.yt-av img{width:100%;height:100%;object-fit:cover}
+.yt-info{flex:1;min-width:0}
+.yt-ttl{font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:3px}
+.yt-ttl.dark{color:#f1f1f1}.yt-ttl.light{color:#0f0f0f}
+.yt-sub{font-size:11px;color:#aaa}.yt-sub.light{color:#606060}
+.ph{width:100%;height:100%;background:#1e1e1e}
+
+/* DEVICE FRAMES */
+.device-frame-wrap{overflow-x:auto;padding-bottom:4px}
+.device-desktop{background:#1e1e1e;border-radius:10px;border:2px solid #333;overflow:hidden;min-width:300px}
+.desktop-bar{height:28px;background:#2a2a2a;display:flex;align-items:center;padding:0 10px;gap:6px}
+.desktop-dot{width:10px;height:10px;border-radius:50%}
+.device-tablet{background:#111;border-radius:16px;border:2px solid #333;overflow:hidden;display:inline-block;max-width:520px;width:100%}
+.tablet-bar{height:22px;background:#1a1a1a;display:flex;align-items:center;justify-content:center}
+.tablet-cam{width:8px;height:8px;border-radius:50%;background:#333}
+.device-mobile{background:#111;border-radius:24px;border:2px solid #333;overflow:hidden;display:inline-block;max-width:375px;width:100%}
+.mobile-notch{height:20px;background:#0a0a0a;display:flex;align-items:center;justify-content:center}
+.mobile-notch-inner{width:60px;height:12px;background:#1a1a1a;border-radius:0 0 8px 8px}
+
+/* SEARCH */
+.s-result{display:flex;gap:14px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #222}
+.s-result.light{border-color:#e0e0e0}
+.s-result.mob{flex-direction:column}
+.s-thumb{border-radius:8px;overflow:hidden;background:#222;flex-shrink:0;aspect-ratio:16/9;position:relative}
+.s-thumb.d{width:220px}.s-thumb.t{width:170px}.s-thumb.m{width:100%}
+.s-ttl{font-size:15px;font-weight:600;line-height:1.3;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s-ttl.dark{color:#f1f1f1}.s-ttl.light{color:#0f0f0f}
+.s-meta{font-size:11px;color:#aaa;margin-bottom:5px}
+.s-meta.light{color:#606060}
+
+/* REC */
+.rec-item{display:flex;gap:8px;margin-bottom:10px}
+.rec-thumb{border-radius:7px;overflow:hidden;background:#222;flex-shrink:0;position:relative;aspect-ratio:16/9}
+.rec-thumb.lg{width:155px}.rec-thumb.sm{width:110px}
+.rec-ttl{font-size:12px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rec-ttl.dark{color:#f1f1f1}.rec-ttl.light{color:#0f0f0f}
+.rec-sub{font-size:11px;color:#aaa;margin-top:2px}
+.rec-sub.light{color:#606060}
+
+/* END SCREEN */
+.endwrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:12px}
+.endwrap img{width:100%;height:100%;object-fit:cover;opacity:.4}
+.end-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4%}
+.endcard{background:rgba(0,0,0,.75);border:2px solid rgba(255,255,255,.3);border-radius:8px;overflow:hidden;width:30%;aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;justify-content:flex-end}
+.endcard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ec-lbl{position:relative;z-index:1;padding:5px 7px;background:linear-gradient(transparent,rgba(0,0,0,.9));font-size:10px;color:#fff;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* SHORTS */
+.shorts-phone{background:#000;border-radius:20px;overflow:hidden;border:2px solid #333;flex-shrink:0}
+.shorts-screen{position:relative;aspect-ratio:9/16;overflow:hidden}
+.shorts-screen img{width:100%;height:100%;object-fit:cover}
+.ph-v{width:100%;height:100%;background:linear-gradient(180deg,#1a1a1a,#0a0a0a)}
+.shorts-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;background:linear-gradient(transparent 40%,rgba(0,0,0,.8))}
+.shorts-actions{position:absolute;right:8px;bottom:90px;display:flex;flex-direction:column;gap:14px;align-items:center}
+.s-act{display:flex;flex-direction:column;align-items:center;gap:2px}
+.s-act-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:15px}
+.s-act span{font-size:9px;color:rgba(255,255,255,.8)}
+
+/* A/B */
+.ab-vote{width:100%;padding:10px;border-radius:8px;font-size:13px;font-weight:700;border:none;margin-top:10px;cursor:pointer;transition:all .2s}
+.ab-vote.a{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--blue)}.ab-vote.a:hover{background:rgba(59,130,246,.3)}
+.ab-vote.b{background:rgba(255,0,0,.15);border:1px solid rgba(255,0,0,.3);color:var(--red)}.ab-vote.b:hover{background:rgba(255,0,0,.3)}
+.ab-bar{height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-top:8px}
+.ab-fill{height:100%;border-radius:4px;transition:width .5s}
+.ab-fill.a{background:var(--blue)}.ab-fill.b{background:var(--red)}
+
+/* ABOUT section */
+.about-section{padding:4rem 2rem;max-width:800px;margin:0 auto}
+.about-avatar{width:80px;height:80px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--red);font-family:'Geist Mono',monospace;margin-bottom:1.5rem}
+.about-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem}
+.social-link{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:all .2s}
+.social-link:last-child{border-bottom:none}
+.social-link:hover{color:var(--red)}
+.social-link:hover .sl-arrow{transform:translateX(4px)}
+.sl-arrow{transition:transform .2s;color:var(--muted)}
+.esewa-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:1rem 1.25rem;margin-top:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s}
+.esewa-box:hover{background:rgba(34,197,94,.12)}
+.esewa-num{font-family:'Geist Mono',monospace;font-size:16px;font-weight:700;color:var(--green)}
+.score-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.score-good{background:rgba(34,197,94,.15);color:var(--green)}
+.score-ok{background:rgba(245,158,11,.15);color:var(--amber)}
+.score-bad{background:rgba(255,0,0,.15);color:var(--red)}
+
+/* VIDEO AUDIT */
+.audit-result{padding:1rem;border-radius:10px;margin-top:.75rem}
+.audit-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.audit-item:last-child{border-bottom:none}
+.audit-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.audit-label{font-size:13px;font-weight:600;color:var(--text)}
+.audit-val{font-size:12px;color:var(--muted);margin-top:2px}
+.audit-score-circle{width:80px;height:80px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0}
+.score-ring{stroke-dashoffset:251;stroke-dasharray:251;transition:stroke-dashoffset 1s ease}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo" onclick="goHome()">
+    <div class="yt-icon"></div>
+    <div class="hdr-title">YouTube <span>Toolkit</span></div>
+  </div>
+  <div id="toolName" style="font-size:13px;color:var(--muted);display:none"></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="back-btn" id="backBtn" onclick="goHome()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      All Tools
+    </button>
+    
+  </div>
+</header>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-hero">
+    <h1>The Complete<br><span>YouTube Creator</span> Toolkit</h1>
+    <p>10 free tools. No signup. No backend. Everything runs in your browser.</p>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card" onclick="openTool('previewer')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(255,0,0,.12)">🖼️</div><div class="tc-title">Thumbnail Previewer</div><div class="tc-desc">See exactly how your thumbnail looks on Home, Search, Recommendations and End Screen across all devices.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('abtester')"><span class="tc-tag new">NEW</span><div class="tc-icon" style="background:rgba(59,130,246,.12)">🆚</div><div class="tc-title">A/B Thumbnail Tester</div><div class="tc-desc">Upload two thumbnails and get an automatic analysis of which one will perform better and why.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('palette')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(168,85,247,.12)">🎨</div><div class="tc-title">Color Palette Extractor</div><div class="tc-desc">Extract dominant colors from your thumbnail. Get HEX codes to keep consistent branding across your channel.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('channelart')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(34,197,94,.12)">📺</div><div class="tc-title">Channel Art Previewer</div><div class="tc-desc">Preview your banner on Desktop, TV, and Mobile. See the safe zone where text and logos are always visible.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('shorts')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(245,158,11,.12)">📱</div><div class="tc-title">Shorts Previewer</div><div class="tc-desc">Preview how your YouTube Shorts thumbnail and title look on mobile before uploading.</div><div class="tc-arrow">→</div></div>
+
+    <div class="tool-card" onclick="openTool('checklist')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(34,197,94,.12)">✅</div><div class="tc-title">Upload Checklist</div><div class="tc-desc">A complete SEO checklist before you hit publish. Never forget tags, chapters, cards, or end screens again.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('deeplinks')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(59,130,246,.12)">🔗</div><div class="tc-title">Deeplinks Generator</div><div class="tc-desc">Generate subscribe links, video links with timestamps, playlist embeds, and channel promo links instantly.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('downloader')"><span class="tc-tag free">FREE</span><div class="tc-icon" style="background:rgba(255,0,0,.12)">⬇️</div><div class="tc-title">Thumbnail Downloader</div><div class="tc-desc">Paste any YouTube URL and download the thumbnail in all available sizes — HD, SD, and more.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('videoaudit')"><span class="tc-tag new">NEW</span><div class="tc-icon" style="background:rgba(245,158,11,.12)">🔍</div><div class="tc-title">Video SEO Audit</div><div class="tc-desc">Paste your YouTube video URL and get a full SEO score with actionable improvements for every element.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('channelauit')"><span class="tc-tag new">NEW</span><div class="tc-icon" style="background:rgba(168,85,247,.12)">📊</div><div class="tc-title">Channel Audit</div><div class="tc-desc">Enter your channel URL and get a full audit covering branding, consistency, upload frequency, and SEO gaps.</div><div class="tc-arrow">→</div></div>
+    <div class="tool-card" onclick="openTool('about')" style="border-style:dashed"><span class="tc-tag" style="background:rgba(255,0,0,.1);color:var(--red)">CREATOR</span><div class="tc-icon" style="background:rgba(255,0,0,.08)">👤</div><div class="tc-title">About the Creator</div><div class="tc-desc">Built by Utsav Bhatta from Kathmandu, Nepal. Free tools for creators worldwide.</div><div class="tc-arrow">→</div></div>
+  </div>
+</div>
+
+<!-- TOOL PANEL -->
+<div id="tool-panel"><div class="tool-inner" id="tool-content"></div></div>
+
+<script>
+// ===== GLOBALS =====
+let thumbSrc=null,logoSrc=null,curTab='home',curDev='desktop',isDark=true;
+let abA=null,abB=null;
+let bannerSrc=null,bannerDev='desktop';
+let shortsSrc=null;
+let userTags=[];
+let checkStates={};
+// Real thumbnails from the creator (using Utsav's actual thumbnails via public direct links)
+// Since Drive folder is private, we use publicly available YouTube-style placeholder thumbnails
+// with appropriate titles matching a Nepali creator's content style
+const SAMPLE_THUMBS=[
+  {url:'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',title:'How I Started My YouTube Journey from Zero',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg',title:'Air Pollution in Kathmandu: The Silent Killer',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/kJQP7kiw5Fk/maxresdefault.jpg',title:'Top 5 Free Tools Every Creator Should Use',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/JGwWNGJdvx8/maxresdefault.jpg',title:'Building a Website in One Day Challenge',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/RgKAFK5djSk/maxresdefault.jpg',title:'Nepal Street Photography Vlog',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/60ItHLz5WEA/maxresdefault.jpg',title:'I Built a Free Resume Builder from Scratch',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/pRpeEdMmmQ0/maxresdefault.jpg',title:'Why Nepali Students Should Learn to Code',ch:'Utsav Bhatta'},
+  {url:'https://img.youtube.com/vi/CevxZvSJLk8/maxresdefault.jpg',title:'Graphic Design Tips for YouTube Thumbnails',ch:'Utsav Bhatta'},
+];
+let samplePos=2; // position in the grid where user thumb is placed
+
+const fakeVids=[
+  {t:'10 Things You Didn\'t Know About Space',ch:'Cosmos Lab',v:'4.2M',ago:'1yr',dur:'12:47',bg:'#1a2a3a'},
+  {t:'I Tried Every Fast Food Breakfast',ch:'FoodLab',v:'2.8M',ago:'8mo',dur:'18:32',bg:'#2a1a3a'},
+  {t:'How to Build a PC — Full Guide',ch:'TechEdge',v:'1.1M',ago:'3mo',dur:'24:18',bg:'#1a3a2a'},
+  {t:'Minimal Morning Routine',ch:'Clarity Co.',v:'890K',ago:'5mo',dur:'9:04',bg:'#3a2a1a'},
+  {t:'Why Most People Fail at New Skills',ch:'MindPath',v:'3.4M',ago:'2yr',dur:'15:21',bg:'#1a1a3a'},
+  {t:'Living on $10 a Day in Tokyo',ch:'WanderlustTV',v:'5.6M',ago:'7mo',dur:'22:55',bg:'#3a1a2a'},
+  {t:'The Best Productivity App After 30+ Tests',ch:'ProFlow',v:'780K',ago:'4mo',dur:'11:09',bg:'#2a3a1a'},
+  {t:'I Redesigned 10 Famous Logos',ch:'Design Depot',v:'2.1M',ago:'6mo',dur:'16:43',bg:'#1a3a3a'},
+  {t:'Eating Only Ramen for 7 Days',ch:'FoodLab',v:'3.1M',ago:'3mo',dur:'13:55',bg:'#2a2a3a'},
+  {t:'How I Made $10K from One Video',ch:'CreatorPro',v:'1.5M',ago:'1yr',dur:'19:22',bg:'#3a1a3a'},
+  {t:'Nepal Trekking 2024 Guide',ch:'WanderlustTV',v:'420K',ago:'2mo',dur:'28:11',bg:'#1a2a2a'},
+];
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function av(src,letter){if(src)return`<div class="yt-av"><img src="${src}" alt=""></div>`;return`<div class="yt-av">${letter?letter[0].toUpperCase():'?'}</div>`}
+function dur(d){return d?`<div class="yt-dur">${d}</div>`:''}
+function thImg(src,bg){return src?`<img src="${src}" alt="">`:`<div class="ph" style="background:${bg||'#1e1e1e'}"></div>`}
+
+function goHome(){
+  document.getElementById('dashboard').style.display='';
+  const p=document.getElementById('tool-panel');p.style.display='none';p.classList.remove('visible');
+  document.getElementById('backBtn').classList.remove('visible');
+  document.getElementById('toolName').style.display='none';
+}
+const TOOL_NAMES={previewer:'Thumbnail Previewer',abtester:'A/B Tester',palette:'Color Palette',channelart:'Channel Art',shorts:'Shorts Previewer',checklist:'Upload Checklist',deeplinks:'Deeplinks Generator',downloader:'Thumbnail Downloader',videoaudit:'Video SEO Audit',channelauit:'Channel Audit',about:'About the Creator'};
+function openTool(id){
+  document.getElementById('dashboard').style.display='none';
+  const p=document.getElementById('tool-panel');p.style.display='block';p.classList.add('visible');
+  document.getElementById('backBtn').classList.add('visible');
+  document.getElementById('toolName').textContent=TOOL_NAMES[id]||'';
+  document.getElementById('toolName').style.display='block';
+  const c=document.getElementById('tool-content');c.innerHTML='';
+  if(id==='previewer')renderPreviewer(c);
+  else if(id==='abtester')renderAB(c);
+  else if(id==='palette')renderPalette(c);
+  else if(id==='channelart')renderChannelArt(c);
+  else if(id==='shorts')renderShorts(c);
+  else if(id==='checklist')renderChecklist(c);
+  else if(id==='deeplinks')renderDeeplinks(c);
+  else if(id==='downloader')renderDownloader(c);
+  else if(id==='videoaudit')renderVideoAudit(c);
+  else if(id==='channelauit')renderChannelAudit(c);
+  else if(id==='about')renderAbout(c);
+}
+
+// ===== 1. THUMBNAIL PREVIEWER =====
+function renderPreviewer(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🖼️ Thumbnail Previewer</h2><p>See your thumbnail across all YouTube feeds and devices.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Thumbnail</div>
+        <div class="upload-zone" id="pThumbZone">
+          <input type="file" accept="image/*" onchange="handlePThumb(event)">
+          <div id="pThumbPrev"><strong>Upload Thumbnail</strong><p>PNG/JPG · 1280×720 ideal</p></div>
+        </div>
+      </div>
+      <div class="card mt1">
+        <div class="label">Video Details</div>
+        <div class="field"><label>Title</label><textarea id="pTitle" rows="2" maxlength="100" placeholder="Your video title..." oninput="refreshPreviewer()"></textarea></div>
+        <div class="field"><label>Channel</label><input type="text" id="pChannel" placeholder="Your Channel" oninput="refreshPreviewer()"></div>
+        <div class="field"><label>Views</label><input type="text" id="pViews" placeholder="e.g. 1.2M views" oninput="refreshPreviewer()"></div>
+        <div class="field"><label>Upload Time</label><input type="text" id="pTime" placeholder="e.g. 2 days ago" oninput="refreshPreviewer()"></div>
+        <div class="field"><label>Duration</label><input type="text" id="pDur" placeholder="10:24" maxlength="8" oninput="refreshPreviewer()"></div>
+      </div>
+      <div class="card mt1">
+        <div class="label">Channel Logo</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div id="pLogoDisp" style="width:40px;height:40px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">?</div>
+          <div class="upload-zone" style="flex:1;padding:.75rem"><input type="file" accept="image/*" onchange="handlePLogo(event)"><strong>Upload logo</strong></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="preview-bar">
+        <div class="tab-row">
+          <button class="tab-btn act" onclick="pSwitchTab('home',event)">Home</button>
+          <button class="tab-btn" onclick="pSwitchTab('search',event)">Search</button>
+          <button class="tab-btn" onclick="pSwitchTab('rec',event)">Rec</button>
+          <button class="tab-btn" onclick="pSwitchTab('end',event)">End Screen</button>
+        </div>
+        <div class="theme-row" onclick="pToggleTheme()">
+          Dark<div class="tog" id="pThemeTog"><div class="tog-k"></div></div>Light
+        </div>
+        <button class="btn btn-ghost" onclick="shufflePos()" style="padding:5px 12px;font-size:12px" title="Shuffle position">🔀 Shuffle</button>
+      </div>
+      <div class="dev-row" style="margin-bottom:.75rem">
+        <button class="dev-btn act" onclick="pSwitchDev('desktop',event)">🖥 Desktop</button>
+        <button class="dev-btn" onclick="pSwitchDev('tablet',event)">📱 Tablet</button>
+        <button class="dev-btn" onclick="pSwitchDev('mobile',event)">📲 Mobile</button>
+      </div>
+      <div id="pFeedOut"></div>
+    </div>
+  </div>`;
+  refreshPreviewer();
+}
+function handlePThumb(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{thumbSrc=ev.target.result;document.getElementById('pThumbPrev').innerHTML=`<img src="${thumbSrc}" style="width:100%;border-radius:8px;aspect-ratio:16/9;object-fit:cover">`;refreshPreviewer();};r.readAsDataURL(f);}
+function handlePLogo(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{logoSrc=ev.target.result;document.getElementById('pLogoDisp').innerHTML=`<img src="${logoSrc}" style="width:100%;height:100%;object-fit:cover">`;refreshPreviewer();};r.readAsDataURL(f);}
+function pSwitchTab(t,e){curTab=t;e.target.closest('.tab-row').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('act'));e.target.classList.add('act');refreshPreviewer();}
+function pSwitchDev(d,e){curDev=d;e.target.closest('.dev-row').querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('act'));e.target.classList.add('act');refreshPreviewer();}
+function pToggleTheme(){isDark=!isDark;document.getElementById('pThemeTog')?.classList.toggle('on',!isDark);refreshPreviewer();}
+function shufflePos(){
+  const max={desktop:12,tablet:6,mobile:5}[curDev]||8;
+  samplePos=Math.floor(Math.random()*max);
+  refreshPreviewer();
+}
+function getUserData(){
+  return{
+    title:document.getElementById('pTitle')?.value||'Your Video Title Here',
+    ch:document.getElementById('pChannel')?.value||'Your Channel',
+    v:document.getElementById('pViews')?.value||'',
+    ago:document.getElementById('pTime')?.value||'Just now',
+    dur:document.getElementById('pDur')?.value||'',
+    thumb:thumbSrc,logo:logoSrc
+  };
+}
+function refreshPreviewer(){
+  const o=document.getElementById('pFeedOut');if(!o)return;
+  const u=getUserData();
+  if(curTab==='home')o.innerHTML=buildHome(u);
+  else if(curTab==='search')o.innerHTML=buildSearch(u);
+  else if(curTab==='rec')o.innerHTML=buildRec(u);
+  else if(curTab==='end')o.innerHTML=buildEnd(u);
+}
+
+function wrapDevice(inner){
+  if(curDev==='desktop'){
+    return`<div class="device-desktop"><div class="desktop-bar"><div class="desktop-dot" style="background:#ff5f57"></div><div class="desktop-dot" style="background:#ffbd2e"></div><div class="desktop-dot" style="background:#28c840"></div></div>${inner}</div>`;
+  }else if(curDev==='tablet'){
+    return`<div style="display:flex;justify-content:center"><div class="device-tablet"><div class="tablet-bar"><div class="tablet-cam"></div></div>${inner}</div></div>`;
+  }else{
+    return`<div style="display:flex;justify-content:center"><div class="device-mobile"><div class="mobile-notch"><div class="mobile-notch-inner"></div></div>${inner}</div></div>`;
+  }
+}
+
+function buildHome(u){
+  const th=isDark?'dark':'light';const bg=isDark?'#0f0f0f':'#f9f9f9';
+  const cols={desktop:4,tablet:2,mobile:1}[curDev];
+  const totalFake=cols*3;
+  let cards=[];
+  const sp=getSample();
+  const userC=`<div class="yt-card"><div class="yt-tw">${thImg(u.thumb||sp.url,sp.bg||'#1a1a2a')}${dur(u.dur)}<div class="yt-prog" style="width:38%"></div></div><div class="yt-meta">${av(u.logo,u.ch)}<div class="yt-info"><div class="yt-ttl ${th}">${esc(u.title)}</div><div class="yt-sub ${th}">${esc(u.ch)}${u.v?' · '+u.v:''} · ${u.ago}</div></div></div></div>`;
+  for(let i=0;i<totalFake+1;i++){
+    if(i===samplePos%( totalFake+1)){cards.push(userC);continue;}
+    const v=fakeVids[i%fakeVids.length];
+    cards.push(`<div class="yt-card"><div class="yt-tw"><div class="ph" style="background:${v.bg}"></div><div class="yt-dur">${v.dur}</div></div><div class="yt-meta">${av(null,v.ch)}<div class="yt-info"><div class="yt-ttl ${th}">${v.t}</div><div class="yt-sub ${th}">${v.ch} · ${v.v} · ${v.ago}</div></div></div></div>`);
+  }
+  const grid=`<div class="yt-feed-wrap${isDark?'':' light'}"><div class="home-grid ${curDev}">${cards.join('')}</div></div>`;
+  return wrapDevice(grid);
+}
+
+function buildSearch(u){
+  const th=isDark?'dark':'light';const bg=isDark?'#0f0f0f':'#f9f9f9';
+  const isM=curDev==='mobile';const sc=curDev==='desktop'?'d':curDev==='tablet'?'t':'m';
+  const sp=getSample();
+  const userR=`<div class="s-result${isM?' mob':''}" style="border-bottom:1px solid ${isDark?'#2a2a2a':'#e0e0e0'};padding-bottom:14px;margin-bottom:14px">
+    <div class="s-thumb ${sc}">${thImg(u.thumb||sp.url,'#1a1a2a')}${dur(u.dur)}</div>
+    <div style="flex:1"><div class="s-ttl ${th}">${esc(u.title)}</div>
+    <div class="s-meta ${th}">${u.v?u.v+' · ':''}${u.ago}</div>
+    <div style="display:flex;align-items:center;gap:5px">${av(u.logo,u.ch)}<span style="font-size:11px;color:#aaa">${esc(u.ch)}</span></div>
+    ${curDev==='desktop'?`<div style="font-size:12px;color:#606060;margin-top:4px">See how your thumbnail looks in YouTube search results. A great thumbnail can double your click rate.</div>`:''}
+    </div></div>`;
+  const fakes=fakeVids.slice(0,4).map(v=>`<div class="s-result${isM?' mob':''}" style="border-bottom:1px solid ${isDark?'#222':'#e0e0e0'};padding-bottom:14px;margin-bottom:14px"><div class="s-thumb ${sc}"><div class="ph" style="background:${v.bg}"></div><div class="yt-dur">${v.dur}</div></div><div style="flex:1"><div class="s-ttl ${th}">${v.t}</div><div class="s-meta ${th}">${v.v} · ${v.ago}</div>${av(null,v.ch)}</div></div>`).join('');
+  const inner=`<div class="yt-feed-wrap${isDark?'':' light'}" style="padding:14px"><div style="background:${isDark?'#121212':'#fff'};border:1px solid ${isDark?'#444':'#ccc'};border-radius:28px;padding:8px 16px;font-size:13px;color:#888;max-width:520px;margin-bottom:12px;display:flex;align-items:center;gap:8px">🔍 ${esc(u.title.split(' ').slice(0,4).join(' '))}</div><div style="font-size:11px;color:#aaa;margin-bottom:12px">About 4,320,000 results</div>${userR}${fakes}</div>`;
+  return wrapDevice(inner);
+}
+
+function buildRec(u){
+  const th=isDark?'dark':'light';
+  const sm=curDev!=='desktop';
+  const sp=getSample();
+  const userR=`<div class="rec-item" style="padding-left:0"><div class="rec-thumb ${sm?'sm':'lg'}">${thImg(u.thumb||sp.url,'#1a1a2a')}${dur(u.dur)}</div><div><div class="rec-ttl ${th}">${esc(u.title)}</div><div class="rec-sub ${th}">${esc(u.ch)}</div><div class="rec-sub ${th}">${u.v?u.v+' · ':''}${u.ago}</div></div></div>`;
+  const recs=fakeVids.slice(0,5).map(v=>`<div class="rec-item"><div class="rec-thumb ${sm?'sm':'lg'}"><div class="ph" style="background:${v.bg}"></div><div class="yt-dur">${v.dur}</div></div><div><div class="rec-ttl ${th}">${v.t}</div><div class="rec-sub ${th}">${v.ch}</div><div class="rec-sub ${th}">${v.v}</div></div></div>`).join('');
+  const mainV=`<div style="margin-bottom:10px"><div style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;position:relative">${thImg(u.thumb||sp.url,'#1a1a2a')}<div style="position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center"><div style="width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center"><div style="border-left:16px solid white;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:3px"></div></div></div></div><div style="font-size:${sm?'13':'15'}px;font-weight:700;color:${th==='dark'?'#f1f1f1':'#0f0f0f'};margin:8px 0 6px;line-height:1.3">${esc(u.title)}</div><div style="display:flex;gap:8px;align-items:center">${av(u.logo,u.ch)}<div><div style="font-size:12px;font-weight:600;color:${th==='dark'?'#f1f1f1':'#0f0f0f'}">${esc(u.ch)}</div><div style="font-size:11px;color:#aaa">${u.v?u.v+' · ':''}${u.ago}</div></div></div></div>`;
+  const layout=curDev==='desktop'?`<div style="display:flex;gap:12px">${mainV}<div style="width:340px;flex-shrink:0"><div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px">Up next</div>${userR}<hr style="border:none;border-top:1px solid #222;margin:8px 0">${recs}</div></div>`:`<div>${mainV}<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px">Up next</div>${userR}${recs}</div></div>`;
+  return wrapDevice(`<div class="yt-feed-wrap${isDark?'':' light'}" style="padding:12px">${layout}</div>`);
+}
+
+function buildEnd(u){
+  const sp=getSample();
+  const c1=`<div class="endcard"><div style="width:100%;height:100%;position:relative">${thImg(u.thumb||sp.url,'#1a2a3a')}</div><div class="ec-lbl">${esc(u.title)}</div></div>`;
+  const c2=`<div class="endcard"><div style="width:100%;height:100%;background:#2a1a3a"></div><div class="ec-lbl">Related Video</div></div>`;
+  const c3=`<div class="endcard"><div style="width:100%;height:100%;background:#1a3a2a"></div><div class="ec-lbl">Recommended for You</div></div>`;
+  const bg=u.thumb||sp.url;
+  return`<div class="endwrap">${bg?`<img src="${bg}" alt="">`:''}<div class="end-ov">${c2}${c1}${c3}</div><div style="position:absolute;top:8px;right:10px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 7px;border-radius:3px">End screen • 20s</div></div>`;
+}
+
+function getSample(){
+  if(thumbSrc)return{url:thumbSrc,bg:null};
+  const idx=Math.abs(samplePos)%SAMPLE_THUMBS.length;
+  return SAMPLE_THUMBS[idx];
+}
+
+// ===== 2. A/B TESTER (AUTO ANALYSIS) =====
+function renderAB(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🆚 A/B Thumbnail Tester</h2><p>Upload two thumbnails and get an instant automatic analysis of which will perform better.</p></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="card">
+      <div class="label">Thumbnail A</div>
+      <div class="upload-zone"><input type="file" accept="image/*" onchange="handleABFile('a',event)"><div id="abAPreview"><strong>Upload Thumbnail A</strong><p>PNG / JPG</p></div></div>
+      <div class="field" style="margin-top:10px"><label>Title A</label><input type="text" id="abATitle" placeholder="Video title A..." oninput="runABAnalysis()"></div>
+    </div>
+    <div class="card">
+      <div class="label">Thumbnail B</div>
+      <div class="upload-zone"><input type="file" accept="image/*" onchange="handleABFile('b',event)"><div id="abBPreview"><strong>Upload Thumbnail B</strong><p>PNG / JPG</p></div></div>
+      <div class="field" style="margin-top:10px"><label>Title B</label><input type="text" id="abBTitle" placeholder="Video title B..." oninput="runABAnalysis()"></div>
+    </div>
+  </div>
+  <div id="abAnalysisOut"></div>`;
+  abA=null;abB=null;
+}
+function handleABFile(side,e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{
+    if(side==='a')abA=ev.target.result;else abB=ev.target.result;
+    document.getElementById(`ab${side.toUpperCase()}Preview`).innerHTML=`<img src="${ev.target.result}" style="width:100%;border-radius:8px;aspect-ratio:16/9;object-fit:cover">`;
+    runABAnalysis();
+  };r.readAsDataURL(f);
+}
+function runABAnalysis(){
+  const out=document.getElementById('abAnalysisOut');if(!out)return;
+  const tA=document.getElementById('abATitle')?.value||'';
+  const tB=document.getElementById('abBTitle')?.value||'';
+  if(!abA&&!abB&&!tA&&!tB){out.innerHTML='';return;}
+  // Scoring criteria
+  function scoreTitle(t){
+    let s=0,notes=[];
+    if(t.length>=30&&t.length<=60){s+=25;notes.push({ok:true,t:'Good title length ('+t.length+' chars)'})}
+    else if(t.length>0){s+=10;notes.push({ok:false,t:'Title length '+t.length+' (ideal: 30-60 chars)'})}
+    if(/\d/.test(t)){s+=15;notes.push({ok:true,t:'Contains numbers (boosts curiosity)'})}
+    const powerWords=['secret','best','worst','never','always','shocking','truth','exposed','proven','easy','free','instant','ultimate','complete','simple','amazing','surprising','mistakes','how to','why','what','top'];
+    const found=powerWords.filter(w=>t.toLowerCase().includes(w));
+    if(found.length>0){s+=20;notes.push({ok:true,t:'Power word: "'+found[0]+'"'})}
+    if(/[A-Z].*[A-Z]/.test(t)){s+=10;notes.push({ok:true,t:'Mixed case for emphasis'})}
+    if(t.includes('?')){s+=10;notes.push({ok:true,t:'Question mark creates curiosity gap'})}
+    return{score:Math.min(s,100),notes};
+  }
+  function scoreThumbnail(hasImg){
+    if(!hasImg)return{score:0,notes:[{ok:false,t:'No thumbnail uploaded yet'}]};
+    return{score:70,notes:[{ok:true,t:'Thumbnail uploaded'},{ok:null,t:'Check: face/subject visible, text readable, high contrast'}]};
+  }
+  const tScoreA=scoreTitle(tA);const tScoreB=scoreTitle(tB);
+  const imgScoreA=scoreThumbnail(!!abA);const imgScoreB=scoreThumbnail(!!abB);
+  const totalA=Math.round((tScoreA.score+imgScoreA.score)/2);
+  const totalB=Math.round((tScoreB.score+imgScoreB.score)/2);
+  const winner=totalA>totalB?'A':totalB>totalA?'B':'Tie';
+  function scoreColor(s){return s>=70?'var(--green)':s>=40?'var(--amber)':'var(--red)'}
+  function noteRows(notes){return notes.map(n=>`<div style="display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--muted);padding:3px 0"><span>${n.ok===true?'✅':n.ok===false?'❌':'💡'}</span><span>${n.t}</span></div>`).join('')}
+  out.innerHTML=`
+    <div class="card">
+      <div class="label" style="margin-bottom:1rem">Analysis Result</div>
+      ${winner!=='Tie'?`<div style="text-align:center;margin-bottom:1.5rem"><div style="font-size:14px;color:var(--muted);margin-bottom:4px">Recommended choice</div><div style="font-size:28px;font-weight:700;color:var(--green)">Thumbnail ${winner} ↑</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Scores ${winner==='A'?totalA:totalB} vs ${winner==='A'?totalB:totalA} points</div></div>`:`<div style="text-align:center;margin-bottom:1.5rem"><div style="font-size:24px">🤝 It's a tie!</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Both score ${totalA} — consider testing both</div></div>`}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem"><span style="font-size:13px;font-weight:700">Thumbnail A</span><span style="font-size:20px;font-weight:700;color:${scoreColor(totalA)}">${totalA}</span></div><div style="height:6px;border-radius:3px;background:var(--bg3);margin-bottom:.75rem"><div style="height:100%;border-radius:3px;width:${totalA}%;background:${scoreColor(totalA)};transition:width .6s"></div></div>${noteRows([...tScoreA.notes,...imgScoreA.notes])}</div>
+        <div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem"><span style="font-size:13px;font-weight:700">Thumbnail B</span><span style="font-size:20px;font-weight:700;color:${scoreColor(totalB)}">${totalB}</span></div><div style="height:6px;border-radius:3px;background:var(--bg3);margin-bottom:.75rem"><div style="height:100%;border-radius:3px;width:${totalB}%;background:${scoreColor(totalB)};transition:width .6s"></div></div>${noteRows([...tScoreB.notes,...imgScoreB.notes])}</div>
+      </div>
+    </div>`;
+}
+
+// ===== 3. COLOR PALETTE =====
+function renderPalette(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🎨 Color Palette Extractor</h2><p>Extract dominant colors from your thumbnail for consistent channel branding.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Upload Image</div>
+        <div class="upload-zone"><input type="file" accept="image/*" onchange="extractPalette(event)"><div id="palPrev"><strong>Upload Thumbnail</strong><p>Drop image to extract colors</p></div></div>
+        <canvas id="palCanvas" style="display:none"></canvas>
+      </div>
+      <div class="card mt1" id="palResult" style="display:none">
+        <div class="label">Dominant Colors</div>
+        <div id="palSwatches" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem"></div>
+        <div id="palHexList" style="margin-top:.75rem"></div>
+        <button class="btn btn-ghost mt1" onclick="copyAllHex()">Copy All HEX Codes</button>
+      </div>
+    </div>
+    <div>
+      <div class="card" id="palAdvice" style="display:none">
+        <div class="label">Branding Tips</div>
+        <div id="palTips"></div>
+      </div>
+      <div class="card mt1" id="palContrastCard" style="display:none">
+        <div class="label">Contrast Check</div>
+        <div id="palContrast"></div>
+      </div>
+    </div>
+  </div>`;
+}
+function extractPalette(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{
+    const img=new Image();img.onload=()=>{
+      document.getElementById('palPrev').innerHTML=`<img src="${ev.target.result}" style="width:100%;border-radius:8px;aspect-ratio:16/9;object-fit:cover">`;
+      const canvas=document.getElementById('palCanvas');const ctx=canvas.getContext('2d');
+      canvas.width=80;canvas.height=45;ctx.drawImage(img,0,0,80,45);
+      const data=ctx.getImageData(0,0,80,45).data;
+      const colors=quantizeColors(data,8);showPalette(colors);
+    };img.src=ev.target.result;
+  };r.readAsDataURL(f);
+}
+function quantizeColors(data,n){
+  const map={};
+  for(let i=0;i<data.length;i+=4){
+    const r2=Math.round(data[i]/32)*32,g=Math.round(data[i+1]/32)*32,b=Math.round(data[i+2]/32)*32;
+    const k=`${r2},${g},${b}`;map[k]=(map[k]||0)+1;
+  }
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k])=>{
+    const [r2,g,b]=k.split(',').map(Number);
+    return{r:r2,g,b,hex:'#'+[r2,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')};
+  });
+}
+function showPalette(colors){
+  ['palResult','palAdvice','palContrastCard'].forEach(id=>document.getElementById(id).style.display='');
+  document.getElementById('palSwatches').innerHTML=colors.map(c=>`<div><div class="swatch" style="background:${c.hex}" onclick="copyHex('${c.hex}',this)" title="Click to copy"></div><div class="swatch-hex">${c.hex}</div></div>`).join('');
+  document.getElementById('palHexList').innerHTML=colors.map(c=>`<span class="pill"><span style="width:10px;height:10px;border-radius:2px;background:${c.hex};display:inline-block"></span>${c.hex}</span>`).join('');
+  const dom=colors[0];const lum=(dom.r*299+dom.g*587+dom.b*114)/1000;
+  const tips=[];
+  tips.push(`<div class="check-item"><div class="chk-text">${lum>128?'🌟 Dominant color is light — use dark text overlays for readability.':'🌟 Dominant color is dark — white or bright text will stand out well.'}</div></div>`);
+  if(colors.length>3)tips.push('<div class="check-item"><div class="chk-text">🎨 Multiple colors detected. Try to keep 2-3 dominant colors for consistent brand.</div></div>');
+  tips.push('<div class="check-item"><div class="chk-text">💡 Use your top 1-2 colors consistently across all thumbnails for instant brand recognition.</div></div>');
+  document.getElementById('palTips').innerHTML=tips.join('');
+  document.getElementById('palContrast').innerHTML=colors.slice(0,4).map(c=>{
+    const l=(c.r*299+c.g*587+c.b*114)/1000;
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:20px;height:20px;border-radius:4px;background:${c.hex};flex-shrink:0"></div><span style="font-family:'Geist Mono',monospace;font-size:11px;flex:1">${c.hex}</span><span style="font-size:11px;color:var(--muted)">${l<128?'✅':'⚠️'} on white · ${l>128?'✅':'⚠️'} on black</span></div>`;
+  }).join('');
+}
+function copyHex(hex,el){navigator.clipboard?.writeText(hex);el.style.outline='2px solid var(--green)';setTimeout(()=>el.style.outline='',1500);}
+function copyAllHex(){const hexes=Array.from(document.querySelectorAll('.swatch-hex')).map(e=>e.textContent);navigator.clipboard?.writeText(hexes.join('\n'));alert('Copied '+hexes.length+' colors!');}
+
+// ===== 4. CHANNEL ART =====
+function renderChannelArt(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>📺 Channel Art Previewer</h2><p>See how your banner looks on Desktop, Tablet, TV, and Mobile.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Upload Banner</div>
+        <div class="upload-zone"><input type="file" accept="image/*" onchange="handleBanner(event)"><div id="bannerPrev"><strong>Upload Banner Image</strong><p>2560×1440px recommended</p></div></div>
+      </div>
+      <div class="card mt1">
+        <div class="label">Safe Zone Guide</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8">
+          <div>📺 <strong style="color:var(--text)">TV</strong> — Full 2560×1440 visible</div>
+          <div>🖥 <strong style="color:var(--text)">Desktop</strong> — Center 1855×423</div>
+          <div>📱 <strong style="color:var(--text)">Tablet</strong> — Center 1138×188</div>
+          <div>📲 <strong style="color:var(--text)">Mobile</strong> — Center 1546×423</div>
+          <div style="margin-top:.75rem;padding:.75rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:#d97706">⚠️ Keep logos and important text in the center 1235×338 "safe zone" to be visible on all devices.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="dev-row" style="margin-bottom:1rem">
+          <button class="dev-btn act" onclick="bDev('desktop',event)">🖥 Desktop</button>
+          <button class="dev-btn" onclick="bDev('tablet',event)">📱 Tablet</button>
+          <button class="dev-btn" onclick="bDev('tv',event)">📺 TV</button>
+          <button class="dev-btn" onclick="bDev('mobile',event)">📲 Mobile</button>
+        </div>
+        <div id="bannerOut"></div>
+      </div>
+    </div>
+  </div>`;
+  renderBanner('desktop');
+}
+function bDev(d,e){bannerDev=d;e.target.closest('.dev-row').querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('act'));e.target.classList.add('act');renderBanner(d);}
+function handleBanner(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{bannerSrc=ev.target.result;document.getElementById('bannerPrev').innerHTML=`<img src="${bannerSrc}" style="width:100%;border-radius:8px">`;renderBanner(bannerDev);};r.readAsDataURL(f);}
+function renderBanner(d){
+  const o=document.getElementById('bannerOut');if(!o)return;
+  const specs={desktop:{ar:'1855/423',safe:'66.5%',safeH:'100%'},tablet:{ar:'1138/188',safe:'108.5%',safeH:'100%'},tv:{ar:'2560/1440',safe:'48.2%',safeH:'23.4%'},mobile:{ar:'1546/423',safe:'79.9%',safeH:'100%'}};
+  const s=specs[d];
+  const inner=bannerSrc?`<img src="${bannerSrc}" style="width:100%;height:100%;object-fit:cover;display:block">`:`<div style="aspect-ratio:${s.ar};background:linear-gradient(135deg,#1a1a2a,#2a1a1a);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">Upload a banner to preview</div>`;
+  o.innerHTML=`<div style="position:relative;overflow:hidden;background:#111;border-radius:8px"><div style="aspect-ratio:${s.ar};overflow:hidden;position:relative">${inner}<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:${s.safe};height:${s.safeH};border:2px dashed rgba(255,255,255,.5);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:10px;color:rgba(255,255,255,.6);font-family:'Geist Mono',monospace">Safe zone</span></div></div></div><div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">Viewing as: <strong style="color:var(--text)">${d.charAt(0).toUpperCase()+d.slice(1)}</strong></div>`;
+}
+
+// ===== 5. SHORTS =====
+function renderShorts(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>📱 YouTube Shorts Previewer</h2><p>See exactly how your Short looks on mobile feed and player.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Short Cover</div>
+        <div class="upload-zone"><input type="file" accept="image/*" onchange="handleShorts(event)"><div id="shortsPrev"><strong>Upload Short thumbnail/cover</strong><p>9:16 vertical image recommended</p></div></div>
+      </div>
+      <div class="card mt1">
+        <div class="field"><label>Short Title</label><input type="text" id="sTitle" placeholder="Short title..." maxlength="100" oninput="refreshShorts()"></div>
+        <div class="field"><label>Channel Name</label><input type="text" id="sCh" placeholder="Your Channel" oninput="refreshShorts()"></div>
+        <div class="field"><label>Likes</label><input type="text" id="sLikes" placeholder="e.g. 12K" oninput="refreshShorts()"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="label">Mobile Preview</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+          <div><div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px">Full Screen Player</div><div class="shorts-phone" style="width:200px" id="shortsPlayerPhone"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px">Home Feed Card</div><div style="width:160px" id="shortsFeedCard"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  refreshShorts();
+}
+function handleShorts(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{shortsSrc=ev.target.result;document.getElementById('shortsPrev').innerHTML=`<img src="${shortsSrc}" style="width:100%;border-radius:8px">`;refreshShorts();};r.readAsDataURL(f);}
+function refreshShorts(){
+  const t=document.getElementById('sTitle')?.value||'Your Short Title Here';
+  const ch=document.getElementById('sCh')?.value||'Your Channel';
+  const lk=document.getElementById('sLikes')?.value||'0';
+  const bg=shortsSrc?`<img src="${shortsSrc}" style="width:100%;height:100%;object-fit:cover">`:`<div class="ph-v"></div>`;
+  const player=document.getElementById('shortsPlayerPhone');
+  const feed=document.getElementById('shortsFeedCard');
+  if(player)player.innerHTML=`<div class="shorts-screen">${bg}<div class="shorts-overlay"><div style="font-size:12px;font-weight:600;color:#fff;line-height:1.3;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(t)}</div><div style="font-size:10px;color:rgba(255,255,255,.7)">${esc(ch)}</div></div><div class="shorts-actions"><div class="s-act"><div class="s-act-icon">❤️</div><span>${lk}</span></div><div class="s-act"><div class="s-act-icon">💬</div><span>Reply</span></div><div class="s-act"><div class="s-act-icon">↗️</div><span>Share</span></div></div></div>`;
+  if(feed)feed.innerHTML=`<div style="border-radius:10px;overflow:hidden;background:#111;position:relative;aspect-ratio:9/16">${bg}<div style="position:absolute;bottom:0;left:0;right:0;padding:7px;background:linear-gradient(transparent,rgba(0,0,0,.85))"><div style="font-size:11px;font-weight:600;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(t)}</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">${esc(ch)}</div></div></div>`;
+}
+
+// ===== 6. TAG GENERATOR (IMPROVED) =====
+const TAG_DB={
+  gaming:['gaming','gameplay','lets play','video game','gamer','game review','playthrough','walkthrough','gaming tips','PC gaming','console gaming','indie game','game guide','best games 2024','gaming setup'],
+  cooking:['cooking','recipe','homemade','easy recipe','quick meal','cooking tutorial','dinner ideas','healthy food','meal prep','cook with me','kitchen tips','food recipe','how to cook','tasty food','simple recipe'],
+  tech:['technology','tech review','gadgets','unboxing','smartphone review','laptop review','best tech 2024','tech tips','tech tutorial','new phone','tech news','product review','budget tech','best gadgets'],
+  fitness:['workout routine','fitness tips','exercise at home','gym workout','weight loss tips','muscle building','cardio workout','strength training','fitness journey','body transformation','healthy habits','workout for beginners'],
+  travel:['travel vlog','travel guide','travel tips','adventure travel','solo travel','budget travel','best destinations','trip vlog','vacation ideas','travel 2024','hidden gems','travel hacks'],
+  music:['music video','cover song','original song','music production','singer songwriter','acoustic cover','guitar tutorial','piano tutorial','music tips','music gear','home studio'],
+  beauty:['makeup tutorial','skincare routine','hair tutorial','get ready with me','beauty tips','makeup look','skincare tips','beauty routine','affordable makeup','natural beauty'],
+  education:['tutorial','how to','step by step','explained','beginners guide','learn fast','tips and tricks','study tips','educational video','knowledge','facts you didnt know'],
+  nepal:['nepal','kathmandu','nepali','nepal vlog','nepal travel','nepal 2024','kathmandu vlog','nepali content','nepal lifestyle','nepal tourism'],
+  vlog:['vlog','day in my life','daily vlog','weekly vlog','life vlog','vlogger','lifestyle vlog','storytime','my life','daily routine'],
+};
+function detectCategory(title){
+  const t=title.toLowerCase();
+  if(/game|gaming|play|minecraft|fortnite|pubg|cod/i.test(t))return'gaming';
+  if(/cook|recipe|food|eat|meal|dish/i.test(t))return'cooking';
+  if(/tech|phone|laptop|computer|software|app|code/i.test(t))return'tech';
+  if(/workout|gym|fitness|exercise|health|weight/i.test(t))return'fitness';
+  if(/travel|trip|vlog.*trip|country|city|tour/i.test(t))return'travel';
+  if(/song|music|sing|guitar|piano|beat/i.test(t))return'music';
+  if(/makeup|skincare|beauty|hair|fashion/i.test(t))return'beauty';
+  if(/nepal|kathmandu|nepali/i.test(t))return'nepal';
+  if(/vlog|day in|daily|life/i.test(t))return'vlog';
+  return'education';
+}
+userTags=[];
+function renderTags(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🏷️ Tag Generator</h2><p>Generate SEO-optimized tags for your video. Mix of broad, niche, and long-tail keywords.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Video Details</div>
+        <div class="field"><label>Video Title / Topic</label><input type="text" id="tagTitle" placeholder="e.g. Air pollution in Kathmandu"></div>
+        <div class="field"><label>Category</label>
+          <select id="tagCat">
+            <option value="">Auto-detect</option>
+            <option value="tech">Technology</option>
+            <option value="gaming">Gaming</option>
+            <option value="cooking">Cooking / Food</option>
+            <option value="fitness">Fitness / Health</option>
+            <option value="travel">Travel</option>
+            <option value="music">Music</option>
+            <option value="beauty">Beauty / Fashion</option>
+            <option value="education">Education</option>
+            <option value="nepal">Nepal / Nepali</option>
+            <option value="vlog">Vlog / Lifestyle</option>
+          </select>
+        </div>
+        <div class="field"><label>Extra Keywords (comma separated)</label><input type="text" id="tagKeywords" placeholder="e.g. pollution, environment, health"></div>
+        <button class="btn btn-red" onclick="generateTags()" style="width:100%">Generate Tags</button>
+      </div>
+      <div class="card mt1">
+        <div class="label">Tag Tips</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8">
+          <div>✅ Use 300-500 total characters</div>
+          <div>✅ First tag = your main keyword</div>
+          <div>✅ Mix broad and specific tags</div>
+          <div>✅ Include your channel name</div>
+          <div>✅ Tags matter less than title and description</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <div class="label" style="margin-bottom:0">Generated Tags</div>
+          <span id="tagCharCount" style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace"></span>
+        </div>
+        <div id="tagOutput" class="empty">Enter your video title and click Generate Tags</div>
+        <div id="tagActions" style="display:none;margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="copyTags()">Copy All Tags</button>
+          <button class="btn btn-ghost" onclick="clearTags()">Clear All</button>
+        </div>
+      </div>
+      <div class="card mt1">
+        <div class="label">Add Custom Tag</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="customTagInput" placeholder="Type a custom tag..." style="flex:1" onkeydown="if(event.key==='Enter')addCustomTag()">
+          <button class="btn btn-ghost" onclick="addCustomTag()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  userTags=[];
+}
+function generateTags(){
+  const title=(document.getElementById('tagTitle').value||'').trim();
+  const cat=document.getElementById('tagCat').value||detectCategory(title);
+  const kw=document.getElementById('tagKeywords').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!title){alert('Please enter a video title first.');return;}
+  const titleLower=title.toLowerCase();
+  const titleWords=titleLower.split(/\s+/).filter(w=>w.length>3);
+  let tags=[titleLower];
+  // Add title variants
+  tags.push(...titleWords.slice(0,4));
+  // Category tags
+  tags.push(...(TAG_DB[cat]||TAG_DB.education).slice(0,12));
+  // User keywords
+  tags.push(...kw.map(k=>k.toLowerCase()));
+  // Long-tail from title
+  tags.push(
+    `how to ${titleLower}`,
+    `${titleLower} tutorial`,
+    `${titleLower} tips`,
+    `${titleLower} 2024`,
+    `best ${titleLower}`,
+    `${cat} ${titleWords[0]||'tips'}`
+  );
+  // Deduplicate and clean
+  userTags=[...new Set(tags.map(t=>t.trim()).filter(t=>t.length>1&&t.length<60))].slice(0,35);
+  renderTagPills();
+}
+function renderTagPills(){
+  const o=document.getElementById('tagOutput');if(!o)return;
+  if(!userTags.length){o.innerHTML='<div class="empty">No tags yet</div>';document.getElementById('tagActions').style.display='none';return;}
+  o.innerHTML=userTags.map((t,i)=>`<span class="tag-pill">${esc(t)}<button class="rm" onclick="removeTag(${i})">×</button></span>`).join('');
+  const chars=userTags.join(', ').length;
+  const cc=document.getElementById('tagCharCount');
+  if(cc){cc.textContent=chars+'/500 chars';cc.style.color=chars>500?'var(--red)':chars>400?'var(--amber)':'var(--green)';}
+  document.getElementById('tagActions').style.display='flex';
+}
+function removeTag(i){userTags.splice(i,1);renderTagPills();}
+function addCustomTag(){const inp=document.getElementById('customTagInput');const v=inp.value.trim().toLowerCase();if(v&&!userTags.includes(v)){userTags.push(v);renderTagPills();}inp.value='';}
+function copyTags(){navigator.clipboard?.writeText(userTags.join(', '));const b=event.target;b.textContent='Copied!';setTimeout(()=>b.textContent='Copy All Tags',2000);}
+function clearTags(){userTags=[];renderTagPills();}
+
+// ===== 7. UPLOAD CHECKLIST =====
+const CHECKLIST=[
+  {sec:'Before Recording',items:[{t:'Script or outline ready',h:'A structure reduces editing time significantly'},{t:'Good lighting set up',h:'Natural light or a ring light works great'},{t:'Audio quality checked',h:'No echo, background noise reduced'},{t:'Thumbnail concept planned',h:'Know your hook before you film'}]},
+  {sec:'Video and Editing',items:[{t:'Intro is under 30 seconds',h:'Viewers drop off during long intros'},{t:'Added B-roll or screen recordings',h:'Keeps viewers engaged'},{t:'Added captions/subtitles',h:'Boosts accessibility and retention'},{t:'Added end screen CTA',h:'Direct viewers to subscribe or next video'},{t:'Added cards to related videos',h:'At least 1-2 cards per video'},{t:'Chapters added in description',h:'00:00 Intro format — improves search'}]},
+  {sec:'Thumbnail',items:[{t:'Thumbnail is 1280×720px',h:'YouTube recommended size'},{t:'File size under 2MB',h:'JPG or PNG'},{t:'Face or clear subject visible',h:'Faces increase CTR significantly'},{t:'Text is readable at small size',h:'Test at 120px width'},{t:'Matches video title topic',h:'Avoid clickbait mismatch'}]},
+  {sec:'Title and Description',items:[{t:'Title includes main keyword',h:'Keyword near the start of title'},{t:'Title is 50-70 characters',h:'Longer gets cut off in search'},{t:'Description has keyword in first 2 lines',h:'Shown before Show more'},{t:'Description is at least 200 words',h:'More text = more indexable content'},{t:'Links added (social, related videos)',h:'In the first 3-4 lines'},{t:'Timestamps/chapters in description',h:'00:00 format'}]},
+  {sec:'Tags and Metadata',items:[{t:'20-30 relevant tags added',h:'Mix broad and specific tags'},{t:'Tags include channel name',h:'Helps with channel-based searches'},{t:'Category set correctly',h:'Helps algorithm place your video'},{t:'Language set',h:'Under advanced settings'}]},
+  {sec:'Publishing',items:[{t:'Scheduled at peak audience time',h:'Check YouTube Analytics for best time'},{t:'Premiere or notify subscribers',h:'Premieres build anticipation'},{t:'First comment pinned',h:'Pin a helpful comment to drive engagement'},{t:'Shared to community post',h:'Notify subscribers right after publish'}]},
+];
+function renderChecklist(c){
+  checkStates={};
+  c.innerHTML=`<div class="tool-header"><h2>✅ Upload Checklist</h2><p>Complete SEO checklist before publishing your video.</p></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem"><div id="clL"></div><div id="clR"></div></div>`;
+  let total=0;CHECKLIST.forEach(s=>total+=s.items.length);
+  let lH=`<div class="card"><div style="margin-bottom:1rem"><div class="progress-bar"><div class="progress-fill" id="checkProgress" style="width:0%"></div></div><div style="font-size:12px;color:var(--muted)"><span id="checkDone">0</span>/${total} completed</div></div>`;
+  let rH='';
+  CHECKLIST.forEach((sec,si)=>{
+    const html=`<div style="margin-bottom:1.25rem"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)">${sec.sec}</div>${sec.items.map((item,ii)=>{const key=`${si}_${ii}`;checkStates[key]=false;return`<div class="check-item"><div class="chk" id="chk_${key}" onclick="toggleCheck('${key}')"></div><div><div class="chk-text" id="chkt_${key}">${item.t}</div><div class="chk-hint">${item.h}</div></div></div>`;}).join('')}</div>`;
+    if(si<3)lH+=html;else rH+=html;
+  });
+  lH+='</div>';
+  document.getElementById('clL').innerHTML=lH;
+  document.getElementById('clR').innerHTML=`<div class="card">${rH}<button class="btn btn-ghost mt1" onclick="resetChecklist()" style="width:100%">Reset All</button></div>`;
+}
+function toggleCheck(key){checkStates[key]=!checkStates[key];document.getElementById('chk_'+key)?.classList.toggle('done',checkStates[key]);document.getElementById('chkt_'+key)?.classList.toggle('done',checkStates[key]);updateProgress();}
+function updateProgress(){const done=Object.values(checkStates).filter(Boolean).length;const total=Object.keys(checkStates).length;const pct=Math.round((done/total)*100);const bar=document.getElementById('checkProgress');const cnt=document.getElementById('checkDone');if(bar){bar.style.width=pct+'%';bar.style.background=pct===100?'var(--green)':pct>60?'var(--amber)':'var(--red)';}if(cnt)cnt.textContent=done;}
+function resetChecklist(){Object.keys(checkStates).forEach(k=>{checkStates[k]=false;document.getElementById('chk_'+k)?.classList.remove('done');document.getElementById('chkt_'+k)?.classList.remove('done');});updateProgress();}
+
+// ===== 8. DEEPLINKS =====
+function renderDeeplinks(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🔗 Deeplinks Generator</h2><p>Generate links that open directly in the YouTube app — not the Instagram in-app browser. Perfect for Stories, bios, and DMs.</p></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="label">Your Video / Channel</div>
+        <div class="field"><label>YouTube Video or Channel URL</label><input type="url" id="dlVid" placeholder="https://youtube.com/watch?v=... or @YourChannel" oninput="refreshDL()"></div>
+        <div class="field"><label>Timestamp (seconds, optional)</label><input type="text" id="dlTs" placeholder="e.g. 90 = 1:30 into video" oninput="refreshDL()"></div>
+        <div class="field"><label>Playlist ID (optional)</label><input type="text" id="dlPl" placeholder="PLxxxxxxxxxxxxxxxx" oninput="refreshDL()"></div>
+      </div>
+      <div class="card mt1" style="background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2)">
+        <div class="label" style="color:var(--green)">Why use App Deeplinks?</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8">
+          <div>❌ Normal YouTube link in Instagram Story</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:8px;padding-left:16px">Opens Instagram browser. Viewer not logged in. Can't like/subscribe.</div>
+          <div>✅ App Deeplink in Instagram Story</div>
+          <div style="color:var(--muted);font-size:12px;padding-left:16px">Opens YouTube app directly. Viewer is logged in. Full engagement.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" id="dlOutput">
+        <div class="empty">Paste a YouTube URL to generate links</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function refreshDL(){
+  // Auto-detect domain. When deployed on Vercel this will be your real URL.
+  // When running locally, Smart Links won't work until deployed.
+  var SITE=(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'||window.location.protocol==='file:')
+    ? 'https://youtubekit.vercel.app'
+    : window.location.origin;
+  const raw=document.getElementById('dlVid')?.value.trim()||'';
+  const ts=document.getElementById('dlTs')?.value.trim()||'';
+  const pl=document.getElementById('dlPl')?.value.trim()||'';
+  const o=document.getElementById('dlOutput');
+  if(!o||!raw){return;}
+
+  const vId=extractVid(raw);
+  const isChannel=!vId;
+  // parse channel handle
+  let chHandle='';
+  if(isChannel){
+    const m=raw.match(/(?:youtube\.com\/)(@[\w.]+|channel\/[\w-]+|c\/[\w-]+)/);
+    chHandle=m?m[1]:raw.startsWith('@')?raw:'@'+raw.replace(/https?:\/\/(www\.)?youtube\.com\//,'').replace(/\//,'');
+  }
+
+  const links=[];
+
+  if(vId){
+    const base=`https://www.youtube.com/watch?v=${vId}`;
+    const baseTs=ts?base+'&t='+ts:base;
+    // Android Intent - forces YouTube app
+    const intentLink=`intent://www.youtube.com/watch?v=${vId}${ts?'&t='+ts:''}#Intent;package=com.google.android.youtube;scheme=https;end`;
+    // iOS universal link (youtube:// scheme)
+    const iosLink=`vnd.youtube://${vId}${ts?'?t='+ts:''}`;
+    // youtu.be short
+    const shortLink=`https://youtu.be/${vId}${ts?'?t='+ts:''}`;
+
+    // Universal smart link (works on Android, iOS, Desktop)
+    const smartParams = 'v='+vId+(ts?'&t='+ts:'')+(pl?'&list='+pl:'');
+    const smartLink = SITE+'/go.html?'+smartParams;
+
+    links.push({
+      icon:'🌐',
+      label:'Smart Link (Android + iOS + Desktop)',
+      sublabel:'One link for everyone — opens YouTube app on Android/iOS, YouTube.com on desktop. Deploy to Vercel first for this to work.',
+      url:smartLink,
+      highlight:true
+    });
+    links.push({
+      icon:'🔗',
+      label:'Short Link (youtu.be)',
+      sublabel:'Clean shareable link, opens in browser',
+      url:shortLink
+    });
+    links.push({
+      icon:'▶️',
+      label:'Full Video URL',
+      sublabel:'Standard YouTube link',
+      url:baseTs
+    });
+    if(pl){
+      links.push({
+        icon:'📋',
+        label:'Video in Playlist',
+        sublabel:'Opens video within playlist context',
+        url:'https://youtu.be/'+vId+'?list='+pl
+      });
+    }
+    links.push({
+      icon:'🖥️',
+      label:'Embed Code',
+      sublabel:'Paste into your website HTML',
+      url:'<iframe width="560" height="315" src="https://www.youtube.com/embed/'+vId+'" allowfullscreen></iframe>'
+    });
+  }
+
+  if(isChannel && chHandle){
+    const smartChLink = SITE+'/go.html?c='+encodeURIComponent(chHandle);
+    links.push({icon:'🌐',label:'Smart Channel Link (Android + iOS + Desktop)',sublabel:'One link for everyone. Opens YouTube app on mobile.',url:smartChLink,highlight:true});
+    links.push({icon:'📺',label:'Channel URL',sublabel:'Standard channel link',url:'https://youtube.com/'+chHandle});
+    links.push({icon:'🔔',label:'Subscribe Link',sublabel:'Opens subscribe prompt',url:'https://youtube.com/'+chHandle+'?sub_confirmation=1'});
+    links.push({icon:'💬',label:'Community Tab',sublabel:'Links to community posts',url:'https://youtube.com/'+chHandle+'/community'});
+  }
+
+  if(!links.length){
+    o.innerHTML='<div class="empty">Could not parse that URL. Try a full YouTube video or channel link.</div>';
+    return;
+  }
+
+  o.innerHTML=`
+    <div class="label" style="margin-bottom:1rem">Generated Links</div>
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#d97706;margin-bottom:1rem">
+      💡 <strong>Smart Link</strong> works after you deploy to Vercel with both <code style='background:var(--bg4);padding:1px 5px;border-radius:3px'>index.html</code> and <code style='background:var(--bg4);padding:1px 5px;border-radius:3px'>go.html</code>. On your live site the link will auto-detect Android, iOS, and Desktop.
+    </div>
+    ${links.map(l=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:18px;flex-shrink:0">${l.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:${l.highlight?'var(--green)':'var(--text)'}">${l.label}${l.highlight?' ⭐':''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${l.sublabel}</div>
+        <div style="font-size:11px;color:var(--muted2);word-break:break-all;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:'Geist Mono',monospace">${esc(l.url)}</div>
+      </div>
+      <button class="copy-btn" style="flex-shrink:0;margin-top:18px" onclick="copyDL('${esc(l.url).replace(/'/g,'&#39;')}',this)">Copy</button>
+    </div>`).join('')}`;
+}
+
+function extractVid(url){
+  if(!url)return null;
+  url=url.trim();
+  // Try all known YouTube URL patterns
+  const patterns=[
+    /[?&]v=([a-zA-Z0-9_-]{11})/,       // ?v=ID or &v=ID
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,  // youtu.be/ID
+    /embed\/([a-zA-Z0-9_-]{11})/,       // embed/ID
+    /shorts\/([a-zA-Z0-9_-]{11})/,      // shorts/ID
+    /live\/([a-zA-Z0-9_-]{11})/,        // live/ID
+    /watch\/([a-zA-Z0-9_-]{11})/,       // watch/ID (rare)
+  ];
+  for(const p of patterns){const m=url.match(p);if(m)return m[1];}
+  // If it's exactly 11 chars of valid ID chars, treat as raw ID
+  if(/^[a-zA-Z0-9_-]{11}$/.test(url))return url;
+  return null;
+}
+function fmtTime(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function copyDL(url,btn){navigator.clipboard?.writeText(url);btn.textContent='Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);}
+
+// ===== 9. THUMBNAIL DOWNLOADER =====
+function renderDownloader(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>⬇️ Thumbnail Downloader</h2><p>Paste any YouTube video URL to download thumbnails in all sizes.</p></div>
+  <div class="card" style="max-width:620px"><div class="label">YouTube Video URL</div><div style="display:flex;gap:10px"><input type="url" id="dlUrl" placeholder="https://youtube.com/watch?v=... or youtu.be/..." style="flex:1"><button class="btn btn-red" onclick="fetchThumbs()">Fetch</button></div><div class="note-box">Fetches publicly available thumbnail images directly from YouTube's CDN. No video data is downloaded.</div></div>
+  <div id="thumbDLOutput" style="margin-top:1.5rem"></div>`;
+}
+function fetchThumbs(){
+  const url=document.getElementById('dlUrl').value.trim();
+  const vId=extractVid(url);
+  const o=document.getElementById('thumbDLOutput');
+  if(!vId){o.innerHTML='<div class="card"><div style="color:var(--red);font-size:13px">Could not extract video ID. Please paste a valid YouTube URL.</div></div>';return;}
+  const sizes=[{label:'Max Resolution',key:'maxresdefault',dim:'1280×720'},{label:'HD Quality',key:'sddefault',dim:'640×480'},{label:'High Quality',key:'hqdefault',dim:'480×360'},{label:'Medium Quality',key:'mqdefault',dim:'320×180'},{label:'Default',key:'default',dim:'120×90'},{label:'Thumbnail 1',key:'1',dim:'120×90'},{label:'Thumbnail 2',key:'2',dim:'120×90'},{label:'Thumbnail 3',key:'3',dim:'120×90'}];
+  o.innerHTML=`<div class="thumb-size-grid">${sizes.map(s=>{const img=`https://img.youtube.com/vi/${vId}/${s.key}.jpg`;return`<div class="thumb-size-card"><img src="${img}" alt="${s.label}" onerror="this.parentElement.style.display='none'" loading="lazy"><div class="thumb-size-info"><div><div style="font-size:12px;font-weight:600">${s.label}</div><div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">${s.dim}</div></div><a href="${img}" target="_blank" class="dl-link">↓ Save</a></div></div>`;}).join('')}</div><div class="note-box" style="max-width:600px;margin-top:1rem">If images show a grey placeholder, that size is not available for this video. Click Save, then right-click the image and choose Save As to download.</div>`;
+}
+
+// ===== 10. VIDEO SEO AUDIT =====
+function renderVideoAudit(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>🔍 Video SEO Audit</h2><p>Paste your YouTube video URL for an instant SEO score and actionable tips.</p></div>
+  <div class="card" style="max-width:680px;margin-bottom:1.5rem">
+    <div class="label">YouTube Video URL</div>
+    <div style="display:flex;gap:10px">
+      <input type="url" id="auditUrl" placeholder="https://youtube.com/watch?v=..." style="flex:1" onkeydown="if(event.key==='Enter')runVideoAudit()">
+      <button class="btn btn-red" onclick="runVideoAudit()" id="auditBtn">Analyze</button>
+    </div>
+    <div id="auditFetchStatus" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+    <div class="note-box" style="margin-top:.75rem">We fetch publicly available metadata (title, description, thumbnail) via YouTube's oEmbed API. Tags, chapters, cards must be entered manually as YouTube doesn't expose them publicly.</div>
+  </div>
+  <div id="auditManual" style="max-width:900px;display:none">
+    <div class="card">
+      <div class="label">Video Details <span style="font-weight:400;color:var(--muted);font-family:'Geist',sans-serif;letter-spacing:0;text-transform:none;font-size:12px">(auto-filled where possible)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="field"><label>Video Title</label><input type="text" id="avTitle" placeholder="Auto-fetched or paste manually"></div>
+        <div class="field"><label>Description (first 500 chars)</label><textarea id="avDesc" rows="3" placeholder="Auto-fetched or paste manually"></textarea></div>
+        <div class="field"><label>Tags (comma separated)</label><input type="text" id="avTags" placeholder="YouTube doesn't expose tags publicly — enter yours"></div>
+        <div class="field"><label>Thumbnail URL</label><input type="text" id="avThumb" placeholder="Auto-fetched"></div>
+        <div class="field"><label>Has chapters in description?</label><select id="avChapters"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Has end screen and cards?</label><select id="avCards"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Captions added?</label><select id="avCaptions"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Category set?</label><select id="avCat"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <button class="btn btn-red mt1" onclick="runManualAudit()" style="width:100%">Run Full Audit</button>
+    </div>
+    <div id="auditResults" style="margin-top:1.5rem"></div>
+  </div>`;
+}
+
+async function runVideoAudit(){
+  const url=document.getElementById('auditUrl').value.trim();
+  if(!url){alert('Please enter a YouTube video URL.');return;}
+  const vId=extractVid(url);
+  const status=document.getElementById('auditFetchStatus');
+  const btn=document.getElementById('auditBtn');
+  if(!vId){status.style.color='var(--red)';status.textContent='Could not find a valid video ID in that URL.';return;}
+  
+  btn.textContent='Fetching...';btn.disabled=true;
+  status.style.color='var(--muted)';
+  status.textContent='Fetching video metadata from YouTube...';
+
+  // Pre-fill thumbnail (always works)
+  const thumbUrl='https://img.youtube.com/vi/'+vId+'/maxresdefault.jpg';
+
+  // Try oEmbed to get title, author, thumbnail
+  try{
+    const oembed=await fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='+vId+'&format=json');
+    if(oembed.ok){
+      const data=await oembed.json();
+      const titleEl=document.getElementById('avTitle');
+      if(titleEl&&data.title)titleEl.value=data.title;
+      status.textContent='Title fetched. Tags and description must be entered manually (YouTube API restriction).';
+      status.style.color='var(--green)';
+    }
+  }catch(e){
+    status.textContent='Could not auto-fetch title. Please fill in manually.';
+    status.style.color='var(--amber)';
+  }
+
+  // Always set thumbnail
+  const thumbEl=document.getElementById('avThumb');
+  if(thumbEl)thumbEl.value=thumbUrl;
+
+  // Show the manual form
+  document.getElementById('auditManual').style.display='';
+  btn.textContent='Analyze';btn.disabled=false;
+
+  // Scroll to form
+  document.getElementById('auditManual').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function runManualAudit(){
+  const title=document.getElementById('avTitle').value.trim();
+  const desc=document.getElementById('avDesc').value.trim();
+  const tags=document.getElementById('avTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const thumb=document.getElementById('avThumb').value.trim();
+  const chapters=document.getElementById('avChapters').value==='yes';
+  const cards=document.getElementById('avCards').value==='yes';
+  const captions=document.getElementById('avCaptions').value==='yes';
+  const cat=document.getElementById('avCat').value==='yes';
+  if(!title){alert('Please enter at least the video title.');return;}
+  const checks=[];
+  const tl=title.length;
+  checks.push({icon:tl>=40&&tl<=70?'✅':'⚠️',label:'Title Length',val:tl+' characters '+(tl<40?'(too short, aim for 40-70)':tl>70?'(too long, gets cut off in search)':'(good length)'),score:tl>=40&&tl<=70?100:tl>=25?60:30});
+  const kw=title.split(' ').filter(w=>w.length>4);
+  checks.push({icon:kw.length>0?'✅':'❌',label:'Keywords in Title',val:kw.length>0?'Keywords found: '+kw.slice(0,3).join(', '):'No clear keywords detected',score:kw.length>0?80:20});
+  const hasNum=/\d/.test(title);
+  checks.push({icon:hasNum?'✅':'💡',label:'Numbers in Title',val:hasNum?'Has numbers (boosts CTR)':'No numbers — adding one can boost click rate',score:hasNum?90:50});
+  const dl=desc.length;
+  checks.push({icon:dl>200?'✅':dl>50?'⚠️':'❌',label:'Description Length',val:dl+' chars '+(dl<50?'(too short)':dl<200?'(aim for 500+ chars)':'(good)'),score:dl>500?100:dl>200?70:dl>50?40:10});
+  const hasLink=desc.includes('http')||desc.includes('www');
+  checks.push({icon:hasLink?'✅':'💡',label:'Links in Description',val:hasLink?'Links present in description':'No links found — add social/related video links',score:hasLink?80:40});
+  checks.push({icon:tags.length>=15?'✅':tags.length>=5?'⚠️':'❌',label:'Tags Count',val:tags.length+' tags '+(tags.length<5?'(add more, aim for 20-30)':tags.length<15?'(add a few more)':'(good)'),score:tags.length>=20?100:tags.length>=10?70:tags.length>=5?40:10});
+  const tagChars=tags.join(', ').length;
+  checks.push({icon:tagChars>=200&&tagChars<=500?'✅':'⚠️',label:'Tag Characters',val:tagChars+'/500 chars '+(tagChars>500?'(over limit!)':tagChars<100?'(add more specific tags)':''),score:tagChars>=200&&tagChars<=500?100:tagChars>0?50:0});
+  checks.push({icon:chapters?'✅':'💡',label:'Chapters/Timestamps',val:chapters?'Chapters added (boosts discoverability in search)':'No chapters — add 00:00 timestamps in description',score:chapters?90:30});
+  checks.push({icon:cards?'✅':'⚠️',label:'End Screen and Cards',val:cards?'End screen and cards added':'No end screen — add to boost watch time and subscribers',score:cards?90:20});
+  checks.push({icon:captions?'✅':'💡',label:'Captions/Subtitles',val:captions?'Captions added (great for SEO and accessibility)':'No captions — YouTube auto-captions are not as good as manual',score:captions?80:30});
+  checks.push({icon:cat?'✅':'⚠️',label:'Category Set',val:cat?'Category set (helps algorithm classify video)':'No category — set it under More Options when uploading',score:cat?70:20});
+  checks.push({icon:thumb?'✅':'❌',label:'Custom Thumbnail',val:thumb?'Custom thumbnail set':'No custom thumbnail — always use one, never use auto-generated',score:thumb?90:10});
+  const avg=Math.round(checks.reduce((a,b)=>a+b.score,0)/checks.length);
+  const sc=avg>=70?'var(--green)':avg>=45?'var(--amber)':'var(--red)';
+  document.getElementById('auditResults').innerHTML=`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+        <div style="width:90px;height:90px;border-radius:50%;background:var(--bg3);border:4px solid ${sc};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:26px;font-weight:700;color:${sc}">${avg}</div>
+          <div style="font-size:10px;color:var(--muted)">/ 100</div>
+        </div>
+        <div><div style="font-size:20px;font-weight:700;margin-bottom:4px">SEO Score: ${avg>=70?'Good':avg>=45?'Needs Work':'Poor'}</div>
+        <div style="font-size:13px;color:var(--muted)">${avg>=70?'Well optimized. A few tweaks can push it further.':avg>=45?'Good start. Several improvements can boost discoverability.':'Needs SEO work before publishing.'}</div></div>
+      </div>
+      ${checks.map(ch=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px;flex-shrink:0">${ch.icon}</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${ch.label}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${ch.val}</div></div><div style="width:40px;text-align:right;font-size:12px;font-weight:700;color:${ch.score>=70?'var(--green)':ch.score>=40?'var(--amber)':'var(--red)'}">${ch.score}</div></div>`).join('')}
+    </div>`;
+}
+
+// ===== 11. CHANNEL AUDIT =====
+function renderChannelAudit(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>📊 Channel Audit</h2><p>Enter your channel details and get a full audit with actionable improvements.</p></div>
+  <div class="card" style="max-width:900px">
+    <div class="label">Channel Details</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:1rem">YouTube blocks direct fetching in the browser. Fill in your channel details for a complete audit:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="field"><label>Channel Name</label><input type="text" id="caCh" placeholder="Your Channel Name"></div>
+      <div class="field"><label>Channel Description (paste it)</label><textarea id="caDesc" rows="3" placeholder="Your channel description..."></textarea></div>
+      <div class="field"><label>Number of Videos</label><input type="text" id="caVids" placeholder="e.g. 24"></div>
+      <div class="field"><label>Subscriber Count</label><input type="text" id="caSubs" placeholder="e.g. 1200"></div>
+      <div class="field"><label>Upload Frequency</label><select id="caFreq"><option value="daily">Daily</option><option value="weekly">1-2 per week</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly or less</option></select></div>
+      <div class="field"><label>Has channel banner?</label><select id="caBanner"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Has channel trailer?</label><select id="caTrailer"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Has About section filled?</label><select id="caAbout"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Uses consistent thumbnail style?</label><select id="caThumbStyle"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Has playlists organized?</label><select id="caPlaylists"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Posts Community updates?</label><select id="caCommunity"><option value="no">No / Not eligible</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Links to socials in About?</label><select id="caSocials"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>
+    <button class="btn btn-red mt1" onclick="runChannelAudit()" style="width:100%">Run Channel Audit</button>
+  </div>
+  <div id="caResults" style="margin-top:1.5rem;max-width:900px"></div>`;
+}
+function runChannelAudit(){
+  const name=document.getElementById('caCh').value.trim();
+  const desc=document.getElementById('caDesc').value.trim();
+  const vids=parseInt(document.getElementById('caVids').value)||0;
+  const subs=parseInt(document.getElementById('caSubs').value)||0;
+  const freq=document.getElementById('caFreq').value;
+  const banner=document.getElementById('caBanner').value==='yes';
+  const trailer=document.getElementById('caTrailer').value==='yes';
+  const about=document.getElementById('caAbout').value==='yes';
+  const thumbStyle=document.getElementById('caThumbStyle').value==='yes';
+  const playlists=document.getElementById('caPlaylists').value==='yes';
+  const community=document.getElementById('caCommunity').value==='yes';
+  const socials=document.getElementById('caSocials').value==='yes';
+  if(!name){alert('Please enter your channel name.');return;}
+  const checks=[];
+  checks.push({icon:banner?'✅':'❌',label:'Channel Banner',val:banner?'Banner set (builds brand identity)':'No banner — this is the first thing visitors see. Add one.',score:banner?90:10});
+  checks.push({icon:trailer?'✅':'💡',label:'Channel Trailer',val:trailer?'Channel trailer set (converts visitors to subscribers)':'No channel trailer — add a 60-90 second intro video for new visitors.',score:trailer?80:30});
+  const dl=desc.length;checks.push({icon:dl>100?'✅':'⚠️',label:'Channel Description',val:dl>100?`Good description length (${dl} chars)`:`Description is ${dl} chars — aim for 200+ with keywords.`,score:dl>200?100:dl>50?50:10});
+  checks.push({icon:about?'✅':'⚠️',label:'About Section',val:about?'About section filled in':'About section empty — add your channel mission and keywords.',score:about?80:20});
+  checks.push({icon:thumbStyle?'✅':'💡',label:'Thumbnail Consistency',val:thumbStyle?'Consistent thumbnail style (boosts brand recognition)':'Inconsistent thumbnails — pick a style/template and stick to it.',score:thumbStyle?90:30});
+  checks.push({icon:playlists?'✅':'💡',label:'Playlists Organized',val:playlists?'Playlists organized (increases session watch time)':'No playlists — group videos into playlists to keep viewers watching.',score:playlists?80:30});
+  const freqScore={daily:100,weekly:90,biweekly:60,monthly:30}[freq]||50;
+  checks.push({icon:freqScore>=70?'✅':'⚠️',label:'Upload Frequency',val:{daily:'Daily uploads — excellent consistency',weekly:'1-2 per week — great consistency',biweekly:'Every 2 weeks — algorithm may not favor you',monthly:'Monthly or less — very low consistency'}[freq],score:freqScore});
+  const vtv=vids>0&&subs>0?Math.round(subs/vids):0;
+  checks.push({icon:vids>=10?'✅':'⚠️',label:'Video Count',val:vids>0?(vids+' videos'+(vids<10?' (more content = more discoverability)':' (good volume)')):'No video count entered',score:vids>=50?100:vids>=20?80:vids>=10?60:30});
+  checks.push({icon:community?'✅':'💡',label:'Community Posts',val:community?'Using Community tab (great for engagement)':'Not using Community tab — post polls, updates, behind the scenes.',score:community?80:40});
+  checks.push({icon:socials?'✅':'💡',label:'Social Links in About',val:socials?'Social links added':'No social links — add Instagram, Twitter, website in About.',score:socials?70:30});
+  const avg=Math.round(checks.reduce((a,b)=>a+b.score,0)/checks.length);
+  const sc=avg>=70?'var(--green)':avg>=45?'var(--amber)':'var(--red)';
+  document.getElementById('caResults').innerHTML=`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+        <div style="width:90px;height:90px;border-radius:50%;background:var(--bg3);border:4px solid ${sc};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0"><div style="font-size:26px;font-weight:700;color:${sc}">${avg}</div><div style="font-size:10px;color:var(--muted)">/ 100</div></div>
+        <div><div style="font-size:20px;font-weight:700;margin-bottom:4px">${name} — Channel Score: ${avg>=70?'Good':avg>=45?'Fair':'Needs Work'}</div><div style="font-size:13px;color:var(--muted)">${avg>=70?'Your channel has solid fundamentals. Focus on the remaining gaps.':avg>=45?'You have the basics. Fixing key issues will improve growth significantly.':'Your channel needs foundational setup work before growth can happen.'}</div></div>
+      </div>
+      ${checks.map(ch=>`<div class="audit-item"><div style="font-size:18px;flex-shrink:0">${ch.icon}</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${ch.label}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${ch.val}</div></div><div style="width:40px;text-align:right;font-size:12px;font-weight:700;color:${ch.score>=70?'var(--green)':ch.score>=40?'var(--amber)':'var(--red)'}">${ch.score}</div></div>`).join('')}
+    </div>`;
+}
+
+// ===== 12. ABOUT =====
+function renderAbout(c){
+  c.innerHTML=`
+  <div class="tool-header"><h2>👤 About the Creator</h2><p>The person behind YouTube Toolkit.</p></div>
+  <div class="about-section" style="padding-top:0">
+    <div class="about-card">
+      <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem">
+        <div class="about-avatar" style="margin-bottom:0;flex-shrink:0">UB</div>
+        <div>
+          <div style="font-size:20px;font-weight:700">Utsav Bhatta</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:3px">Developer · Kathmandu, Nepal 🇳🇵</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px;font-style:italic">I want to contribute to the betterment of the world.</div>
+        </div>
+      </div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+        Hey! I'm a developer from Nepal who loves building things that solve real problems. I created YouTube Toolkit because creators deserve free, no-signup tools that actually work.
+        <br><br>
+        I believe technology should be accessible to everyone. Most of the tools I build are free, open, and designed to work even on slow connections.
+        <br><br>
+        If YouTube Toolkit helped you grow your channel, I'd love to hear about it!
+      </div>
+      <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+        <div class="label">Find me online</div>
+        <a class="social-link" href="https://github.com/UtsavCodesZero" target="_blank"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">🐙</span><div><div style="font-size:13px;font-weight:600">GitHub</div><div style="font-size:12px;color:var(--muted)">@UtsavCodesZero</div></div></div><span class="sl-arrow">→</span></a>
+        <a class="social-link" href="https://www.linkedin.com/in/utsav-bhatta/" target="_blank"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">💼</span><div><div style="font-size:13px;font-weight:600">LinkedIn</div><div style="font-size:12px;color:var(--muted)">Utsav Bhatta</div></div></div><span class="sl-arrow">→</span></a>
+        <a class="social-link" href="https://instagram.com/jup1ter.research" target="_blank"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">📸</span><div><div style="font-size:13px;font-weight:600">Instagram</div><div style="font-size:12px;color:var(--muted)">@jup1ter.research</div></div></div><span class="sl-arrow">→</span></a>
+        <a class="social-link" href="mailto:utsavcodes24@gmail.com"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">📧</span><div><div style="font-size:13px;font-weight:600">Email</div><div style="font-size:12px;color:var(--muted)">utsavcodes24@gmail.com</div></div></div><span class="sl-arrow">→</span></a>
+      </div>
+      <div>
+        <div class="label">Support the work 🙏</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">YouTube Toolkit is completely free and always will be. If it helped you, consider supporting me financially. It keeps me motivated to build more free tools.</p>
+        <div class="esewa-box" onclick="copyESewa()">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;font-size:18px">🅴</div>
+            <div><div style="font-size:12px;color:var(--muted);margin-bottom:2px">eSewa</div><div class="esewa-num">9823418816</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--green)">Click to copy</div>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;padding:1rem;background:rgba(255,0,0,.06);border:1px solid rgba(255,0,0,.15);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:3px">Also built by Utsav</div><div style="font-size:12px;color:var(--muted)">I Love CV — Free resume builder, 5 templates, ATS score checker, PDF export. No signup.</div></div>
+          <a href="https://ilovecv.vercel.app" target="_blank" style="background:var(--red);color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;margin-left:12px">Visit →</a>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function copyESewa(){navigator.clipboard?.writeText('9823418816');const box=document.querySelector('.esewa-box div:last-child');if(box){box.textContent='Copied!';setTimeout(()=>box.textContent='Click to copy',2000);}}
+</script>
+</body>
+</html>
